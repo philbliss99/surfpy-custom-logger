@@ -1,0 +1,21 @@
+name: Rockaway Logger
+on:
+  schedule:
+    - cron: '0 */6 * * *' # every 6 hours
+  workflow_dispatch: # also allow manual run
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install surfpy requests
+      - run: python logger.py
+      - run: |
+          git config user.name "logger-bot"
+          git config user.email "bot@example.com"
+          git add data/rockaway_44065_log.csv
+          git commit -m "auto log $(date -u)" || echo "no changes"
+          git push

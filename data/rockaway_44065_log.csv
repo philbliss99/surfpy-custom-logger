@@ -1,0 +1,4 @@
+logged_at_utc,location_lat,location_lon,buoy_id,buoy_time,actual_wvht_ft,actual_wvht_m,actual_dpd,actual_mwd,forecast_hs_ft,forecast_tp,forecast_dir,forecast_source
+2026-09-27T16:51:28.057678+00:00,40.58,-73.83,44065,2026 09 27 16 20,8.530184,2.6,8.0,119.0,,,,TODO_plug_swell.py_here
+2026-09-27T17:16:28.209586+00:00,40.58,-73.83,44065,2026 09 27 16 20,8.530184,2.6,8.0,119.0,,,,fetch_failed
+2026-09-27T17:32:39.419043+00:00,40.58,-73.83,44065,2026 09 27 16 50,7.874015999999999,2.4,7.0,127.0,,,,all_models_down
