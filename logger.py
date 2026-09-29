@@ -16,14 +16,24 @@ def make_rockaway_loc():
     return loc
 
 def get_buoy_actual(loc):
-    # try NDBC direct - most reliable for actual
     try:
         r = requests.get(f"https://www.ndbc.noaa.gov/data/realtime2/{BUOY_ID}.txt", timeout=15)
         lines = r.text.strip().splitlines()
         if len(lines) > 2:
             p = lines[2].split()
-            # WVHT DPD MWD
-            wh = float(p[8]); dpd = float(p[9]); mwd = float(p[11])
+            # NDBC format: YY MM DD hh mm WDIR WSPD GST WVHT DPD APD MWD...
+            # Handle MM = missing
+            def f(i):
+                try:
+                    v = p[i]
+                    return float(v) if v!= 'MM' else None
+                except:
+                    return None
+            wh = f(8); dpd = f(9); mwd = f(11)
+            if wh is None:
+                print(f"Buoy WVHT missing (MM), but continuing")
+                # return None for actuals but let forecast log
+                return None
             return wh, dpd, mwd, datetime.now(timezone.utc), "ndbc_txt"
     except Exception as e:
         print(f"ndbc failed: {e}")
@@ -79,25 +89,30 @@ forecast = get_forecast_surfpy(loc)
 if not forecast:
     forecast = get_forecast_openmeteo()
 
-if not actual:
-    print("No buoy data, exiting")
-    sys.exit(0)
+if actual:
+    wh, dpd, mwd, btime, src_actual = actual
+    wh_ft = round(wh*3.28084,4)
+else:
+    print("No buoy data, logging forecast only")
+    wh, dpd, mwd, btime, src_actual = "", "", "", datetime.now(timezone.utc), "buoy_missing"
+    wh_ft = ""
 
-wh, dpd, mwd, btime, src_actual = actual
 if forecast:
     f_wh, f_tp, f_dir, f_src = forecast
+    f_wh_ft = round(f_wh*3.28084,4) if f_wh else ""
 else:
     f_wh, f_tp, f_dir, f_src = "", "", "", "all_models_down"
+    f_wh_ft = ""
 
 row = {
     "logged_at_utc": datetime.now(timezone.utc).isoformat(),
     "buoy_id": BUOY_ID,
     "buoy_time": btime.isoformat(),
-    "actual_wvht_ft": round(wh*3.28084,4),
+    "actual_wvht_ft": wh_ft,
     "actual_wvht_m": wh,
     "actual_dpd": dpd,
     "actual_mwd": mwd,
-    "forecast_hs_ft": round(f_wh*3.28084,4) if f_wh else "",
+    "forecast_hs_ft": f_wh_ft,
     "forecast_hs_m": f_wh,
     "forecast_tp": f_tp,
     "forecast_dir": f_dir,
