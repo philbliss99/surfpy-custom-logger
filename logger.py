@@ -23,7 +23,7 @@ def get_buoy_actual(loc):
         if len(lines) > 2:
             p = lines[2].split()
             # WVHT DPD MWD
-            wh = float(p[5]); dpd = float(p[6]); mwd = float(p[7])
+            wh = float(p[8]); dpd = float(p[9]); mwd = float(p[11])
             return wh, dpd, mwd, datetime.now(timezone.utc), "ndbc_txt"
     except Exception as e:
         print(f"ndbc failed: {e}")
