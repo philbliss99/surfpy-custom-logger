@@ -1,34 +1,35 @@
-name: Rockaway Logger
+name: Log Buoy Data - Multi-Buoy
+
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */6 * * *'  # every 6 hours, same as before
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   log:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install deps
         run: |
-          pip install requests
-          pip install -e .
+          pip install -r requirements.txt || pip install requests surfpy
 
-      - name: Run logger
-        run: python logger.py
-
-      - name: Commit log
+      - name: Run multi-buoy logger
         run: |
-          git config user.name "logger-bot"
-          git config user.email "bot@philbliss99.com"
-          git add data/rockaway_44065_log.csv
-          git diff --staged --quiet || git commit -m "auto log $(date -u -Iseconds)"
+          python logger.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "buoy-bot"
+          git config user.email "buoy-bot@github.com"
+          git add data/*.csv
+          git diff --staged --quiet || git commit -m "auto: log 44065 + 46221 + 46053 - $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git push
