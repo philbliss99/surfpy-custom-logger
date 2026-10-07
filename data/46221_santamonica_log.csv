@@ -1,3 +1,4 @@
 logged_at_utc,buoy_id,buoy_time,actual_wvht_ft,actual_wvht_m,actual_dpd,actual_mwd,forecast_hs_ft,forecast_hs_m,forecast_tp,forecast_dir,forecast_source
 2026-10-06T01:31:52.711020+00:00,46221,2026-10-06T01:31:51.599632+00:00,3.2808,1.0,15.0,195.0,2.8871,0.88,8.9,222,openmeteo
 2026-10-07T02:38:30.700939+00:00,46221,santamonica,33.85,-118.64,,,,0.86,2.82,10.45,openmeteo,could not convert string to float: 'm',ok
+2026-10-07T03:32:14.001184+00:00,46221,santamonica,33.85,-118.64,,,,0.86,2.82,10.45,openmeteo,could not convert string to float: 'm',ok
