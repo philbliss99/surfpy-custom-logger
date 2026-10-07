@@ -1,129 +1,109 @@
-# logger.py - multi-buoy version for surfpy-custom-logger
 import csv, os, requests
 from datetime import datetime, timezone
-import surfpy
-from surfpy.location import Location
 
 BUOYS = [
-    {"id": "44065", "name": "rockaway", "lat": 40.580, "lon": -73.830, "loc": Location(40.580, -73.830)},
-    {"id": "46221", "name": "santamonica", "lat": 33.85, "lon": -118.63, "loc": Location(33.85, -118.63)},
-    {"id": "46053", "name": "santabarbara", "lat": 34.24, "lon": -119.85, "loc": Location(34.24, -119.85)},
+    {"id": "44065", "name": "rockaway", "lat": 40.369, "lon": -73.703, "ndbc": "44065"},
+    {"id": "46221", "name": "santamonica", "lat": 33.85, "lon": -118.64, "ndbc": "46221"},
+    {"id": "46053", "name": "santabarbara", "lat": 34.242, "lon": -119.773, "ndbc": "46053"},
 ]
 
-# --- keep your working buoy + forecast logic from before ---
-def get_buoy_actual(buoy_id: str):
+def fetch_ndbc_realtime(buoy_id):
+    # NDBC realtime2 - returns WVHT in meters
     url = f"https://www.ndbc.noaa.gov/data/realtime2/{buoy_id}.txt"
     try:
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, timeout=20)
         r.raise_for_status()
         lines = r.text.strip().splitlines()
+        # header on first line, data on second
+        if len(lines) < 2:
+            return None, None, "no data lines"
         header = lines[0].split()
-        if len(lines) < 3:
-            print(f"{buoy_id}: not enough lines")
-            return None
-        data = lines[2].split()
-        row = dict(zip(header, data))
-        # WVHT may be "MM"
-        if row.get("WVHT") == "MM" or row.get("WVHT") is None:
-            print(f"{buoy_id}: Buoy WVHT missing (MM), but continuing")
-            return None
-        wvht_m = float(row.get("WVHT", "MM"))
-        dpd = row.get("DPD")
-        mwd = row.get("MWD")
-        try:
-            dpd_f = float(dpd) if dpd != "MM" else ""
-        except:
-            dpd_f = ""
-        try:
-            mwd_f = float(mwd) if mwd != "MM" else ""
-        except:
-            mwd_f = ""
-        return wvht_m, dpd_f, mwd_f, datetime.now(timezone.utc), "ndbc_txt"
+        data = lines[1].split()
+        d = dict(zip(header, data))
+        wvht = d.get("WVHT")
+        if wvht == "MM" or wvht is None:
+            return None, None, f"WVHT missing ({wvht})"
+        # dominant period
+        dpd = d.get("DPD")
+        if dpd == "MM":
+            dpd = None
+        return float(wvht), float(dpd) if dpd else None, "ok"
     except Exception as e:
-        print(f"{buoy_id} buoy fetch failed: {e}")
-        return None
+        return None, None, str(e)
 
-def get_forecast_surfpy(location):
-    # surfpy model name changed - use open-meteo until we wire correct class
-    return None
-
-def get_forecast_openmeteo(loc: Location):
-    # Fallback forecast from Open-Meteo Marine (always available)
+def fetch_openmeteo_forecast(lat, lon):
+    # Open-Meteo marine forecast - wave_height in meters
+    url = f"https://marine-api.open-meteo.com/v1/marine?latitude={lat}&longitude={lon}&hourly=wave_height,wave_period&forecast_days=1&timezone=UTC"
     try:
-        url = f"https://marine-api.open-meteo.com/v1/marine?latitude={loc.latitude}&longitude={loc.longitude}&hourly=wave_height,wave_period,wave_direction&timezone=UTC"
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, timeout=20)
         r.raise_for_status()
         j = r.json()
-        # get first hour
-        hs = j["hourly"]["wave_height"][0]
-        tp = j["hourly"]["wave_period"][0]
-        wdir = j["hourly"]["wave_direction"][0]
-        print(f"> openmeteo ok: {hs}m")
-        return hs, tp, wdir, "openmeteo"
+        wh = j.get("hourly", {}).get("wave_height", [])
+        wp = j.get("hourly", {}).get("wave_period", [])
+        if not wh or wh[0] is None:
+            return None, None, "openmeteo empty"
+        # first hour = now forecast
+        return float(wh[0]), float(wp[0]) if wp and wp[0] else None, "ok"
     except Exception as e:
-        print(f"openmeteo failed for {loc.latitude},{loc.longitude}: {e}")
-        return None
+        return None, None, str(e)
 
-def get_forecast_combined(loc: Location):
-    # Try surfpy first (your atlantic model), then open-meteo
-    f = get_forecast_surfpy(loc)
-    if f:
-        return f
-    return get_forecast_openmeteo(loc)
+os.makedirs("data", exist_ok=True)
+now = datetime.now(timezone.utc).isoformat()
 
-def log_one(buoy):
-    buoy_id = buoy["id"]
-    print(f"\n--- {buoy_id} ({buoy['name']}) ---")
-    actual = get_buoy_actual(buoy_id)
-    forecast = get_forecast_combined(buoy["loc"])
+for b in BUOYS:
+    buoy_id = b["id"]
+    name = b["name"]
+    lat = b["lat"]
+    lon = b["lon"]
+    ndbc_id = b["ndbc"]
 
-    if actual:
-        wh, dpd, mwd, btime, src_actual = actual
-        wh_ft = round(wh * 3.28084, 4)
+    print(f"\n--- {buoy_id} ({name}) ---")
+
+    actual_m, actual_period, actual_status = fetch_ndbc_realtime(ndbc_id)
+    if actual_m is None:
+        print(f"Buoy WVHT missing ({actual_status}), but continuing to forecast")
+        # Still log a row with actual = empty so we track gaps
+
+    forecast_m, forecast_period, forecast_status = fetch_openmeteo_forecast(lat, lon)
+    if forecast_m is not None:
+        print(f"> openmeteo ok: {forecast_m}m")
     else:
-        wh, dpd, mwd, btime = "", "", "", datetime.now(timezone.utc)
-        wh_ft = ""
-        print(f"No buoy data, logging forecast only")
+        print(f"> openmeteo fail: {forecast_status}")
 
-    if forecast:
-        f_wh, f_tp, f_dir, f_src = forecast
-        f_wh_ft = round(f_wh * 3.28084, 4) if f_wh != "" and f_wh is not None else ""
-        if f_src == "openmeteo":
-            print(f"> atlantic ok: {f_wh}m")  # keep log format similar
-    else:
-        f_wh, f_tp, f_dir, f_src = "", "", "", "all_models_down"
-        f_wh_ft = ""
-        print(f"All forecast models down for {buoy_id}")
+    # Convert to ft for your CSV (you were using ft before)
+    def m_to_ft(m):
+        return round(m * 3.28084, 2) if m is not None else ""
 
-    CSV_PATH = f"data/{buoy['id'].lower()}_{buoy['name']}_log.csv"
-    if buoy_id == "44065":
-        CSV_PATH = "data/rockaway_44065_log.csv"
+    csv_path = f"data/{buoy_id}_{name}_log.csv"
+    header = ["logged_at_utc","buoy_id","buoy_name","lat","lon",
+              "actual_hs_m","actual_hs_ft","actual_period_s",
+              "forecast_hs_m","forecast_hs_ft","forecast_period_s",
+              "forecast_source","actual_status","forecast_status"]
 
     row = {
-        "logged_at_utc": datetime.now(timezone.utc).isoformat(),
+        "logged_at_utc": now,
         "buoy_id": buoy_id,
-        "buoy_time": btime.isoformat() if hasattr(btime, "isoformat") else str(btime),
-        "actual_wvht_ft": wh_ft,
-        "actual_wvht_m": wh,
-        "actual_dpd": dpd,
-        "actual_mwd": mwd,
-        "forecast_hs_ft": f_wh_ft,
-        "forecast_hs_m": f_wh,
-        "forecast_tp": f_tp,
-        "forecast_dir": f_dir,
-        "forecast_source": f_src,
+        "buoy_name": name,
+        "lat": lat,
+        "lon": lon,
+        "actual_hs_m": actual_m if actual_m is not None else "",
+        "actual_hs_ft": m_to_ft(actual_m),
+        "actual_period_s": actual_period if actual_period is not None else "",
+        "forecast_hs_m": forecast_m if forecast_m is not None else "",
+        "forecast_hs_ft": m_to_ft(forecast_m),
+        "forecast_period_s": forecast_period if forecast_period is not None else "",
+        "forecast_source": "openmeteo" if forecast_m is not None else "",
+        "actual_status": actual_status,
+        "forecast_status": forecast_status,
     }
 
-    os.makedirs(os.path.dirname(CSV_PATH), exist_ok=True)
-    exists = os.path.exists(CSV_PATH)
-    with open(CSV_PATH, "a", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=row.keys())
-        if not exists:
+    write_header = not os.path.exists(csv_path)
+    with open(csv_path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=header)
+        if write_header:
             w.writeheader()
         w.writerow(row)
 
-    print(f"Logged: actual {row['actual_wvht_ft']}ft @ {row['actual_dpd']}s | forecast {row['forecast_hs_ft']}ft via {f_src}")
+    print(f"Logged: actual {row['actual_hs_ft']}ft @ {row['actual_period_s']}s | forecast {row['forecast_hs_ft']}ft @ {row['forecast_period_s']}s via {row['forecast_source']}")
 
-if __name__ == "__main__":
-    for b in BUOYS:
-        log_one(b)
+print("\nDone")
