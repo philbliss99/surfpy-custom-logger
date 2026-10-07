@@ -20,7 +20,7 @@ jobs:
 
       - name: Install deps
         run: |
-          pip install -r requirements.txt || pip install requests surfpy
+          pip install requests
 
       - name: Run multi-buoy logger
         run: |
