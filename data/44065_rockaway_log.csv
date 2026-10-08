@@ -3,3 +3,4 @@ issued_at_utc,target_time_utc,lead_hours,buoy_id,buoy_name,lat,lon,actual_hs_m,a
 2026-10-08T03:00:00Z,2026-10-08T09:00:00Z,6,44065,rockaway,40.369,-73.703,,,,0.88,2.89,4.2,openmeteo,,ok
 2026-10-08T03:00:00Z,2026-10-09T03:00:00Z,24,44065,rockaway,40.369,-73.703,,,,0.52,1.71,4.8,openmeteo,,ok
 2026-10-08T03:00:00Z,2026-10-10T03:00:00Z,48,44065,rockaway,40.369,-73.703,,,,0.38,1.25,5.8,openmeteo,,ok
+2026-10-08T03:46:51.935665+00:00,44065,rockaway,40.369,-73.703,,,,0.84,2.76,3.9,openmeteo,could not convert string to float: 'm',ok
