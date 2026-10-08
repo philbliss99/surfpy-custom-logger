@@ -5,3 +5,7 @@ issued_at_utc,target_time_utc,lead_hours,buoy_id,buoy_name,lat,lon,actual_hs_m,a
 2026-10-08T03:00:00Z,2026-10-10T03:00:00Z,48,46053,santabarbara,34.242,-119.773,,,,1.38,4.53,7.95,openmeteo,,ok
 2026-10-08T03:46:51.935665+00:00,46053,santabarbara,34.242,-119.773,,,,0.86,2.82,9.95,openmeteo,could not convert string to float: 'm',ok
 2026-10-08T12:32:48.397291+00:00,46053,santabarbara,34.242,-119.773,,,,0.92,3.02,9.45,openmeteo,could not convert string to float: 'm',ok
+2026-10-08T22:00:00Z,2026-10-08T22:00:00Z,0,46053,santabarbara,34.242,-119.773,0.8,2.62,,0.92,3.02,11.45,openmeteo,ok,ok
+2026-10-08T22:00:00Z,2026-10-09T04:00:00Z,6,46053,santabarbara,34.242,-119.773,,,,1.0,3.28,11.25,openmeteo,,ok
+2026-10-08T22:00:00Z,2026-10-09T22:00:00Z,24,46053,santabarbara,34.242,-119.773,,,,1.06,3.48,10.8,openmeteo,,ok
+2026-10-08T22:00:00Z,2026-10-10T22:00:00Z,48,46053,santabarbara,34.242,-119.773,,,,1.14,3.74,10.05,openmeteo,,ok
