@@ -1,0 +1,5 @@
+issued_at_utc,target_time_utc,lead_hours,buoy_id,buoy_name,lat,lon,actual_hs_m,actual_hs_ft,actual_period_s,forecast_hs_m,forecast_hs_ft,forecast_period_s,forecast_source,actual_status,forecast_status
+2026-10-08T03:00:00Z,2026-10-08T03:00:00Z,0,46221,santamonica,33.85,-118.64,1.4,4.59,11.0,1.16,3.81,10.55,openmeteo,ok,ok
+2026-10-08T03:00:00Z,2026-10-08T09:00:00Z,6,46221,santamonica,33.85,-118.64,,,,1.12,3.67,11.05,openmeteo,,ok
+2026-10-08T03:00:00Z,2026-10-09T03:00:00Z,24,46221,santamonica,33.85,-118.64,,,,1.16,3.81,11.9,openmeteo,,ok
+2026-10-08T03:00:00Z,2026-10-10T03:00:00Z,48,46221,santamonica,33.85,-118.64,,,,1.28,4.2,11.45,openmeteo,,ok
