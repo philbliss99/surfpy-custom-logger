@@ -9,6 +9,9 @@ BUOYS = [
 
 LEADS = [0, 6, 24, 48]  # hours ahead
 
+def safe(s):
+    return str(s).replace(',', ';').replace('\n',' ') if s else ""
+
 def m_to_ft(m):
     return round(m * 3.28084, 2) if m is not None else ""
 
