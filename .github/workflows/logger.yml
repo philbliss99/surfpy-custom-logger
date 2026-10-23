@@ -2,7 +2,7 @@ name: Log Buoy Data - Multi-Buoy
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours, same as before
+    - cron: "0 */6 * * *"  # every 6 hours
   workflow_dispatch:
 
 jobs:
@@ -12,24 +12,26 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          ref: data  # <-- FIX: checkout data branch, not main
+          
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install deps
         run: |
-          pip install requests
+          pip install requests pandas
 
-      - name: Run multi-buoy logger
+      - name: Run logger
         run: |
           python logger.py
 
-      - name: Commit and push
+      - name: Commit and push data
         run: |
-          git config user.name "buoy-bot"
-          git config user.email "buoy-bot@github.com"
-          git add data/*.csv
-          git diff --staged --quiet || git commit -m "auto: log 44065 + 46221 + 46053 - $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          git push
+          git config user.name "surf-bot"
+          git config user.email "bot@surf.local"
+          git add -f data/*.csv
+          git commit -m "auto log $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "no changes"
+          git push origin data
