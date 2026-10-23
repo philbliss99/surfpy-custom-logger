@@ -1,3 +1,11 @@
+# Don't push logs - they grow forever
+data/
+*.csv
+*.log
+forecast.json
+# Keep code
+!examples/*.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
